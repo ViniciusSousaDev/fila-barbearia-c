@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>  // Para a função sleep()
+#include <locale.h> // ✅ para acentos
 
 typedef struct Cliente {
   char *nome_cliente;
@@ -44,8 +44,7 @@ void adicionarCliente(FilaEspera *fila, char *nome_cliente, char *tipo_corte) {
 void proximoCliente(FilaEspera *fila) {
   if (filaVazia(fila)) {
     printf("Não há mais clientes na fila de espera.\n");
-    printf(
-        "+--------------------------------------------------------------+\n");
+    printf("+--------------------------------------------------------------+\n");
     return;
   }
 
@@ -64,11 +63,15 @@ void proximoCliente(FilaEspera *fila) {
 }
 
 void freeFilaEspera(FilaEspera *fila) {
-  for (int i = 0; i < fila->tamanho; i++) {
-    Cliente *temp = fila->elementos[i];
+  while (!filaVazia(fila)) {
+    Cliente *temp = fila->elementos[fila->inicio];
+
     free(temp->nome_cliente);
     free(temp->tipo_corte);
     free(temp);
+
+    fila->inicio = (fila->inicio + 1) % 100;
+    fila->tamanho--;
   }
   free(fila->elementos);
   free(fila);
@@ -98,17 +101,14 @@ int selecionarTipoCorte(char *tipo_corte) {
     printf("4. Sobrancelha\n");
     printf("5. Luzes\n");
     printf("6. Pézinho\n");
-    printf(
-        "+--------------------------------------------------------------+\n");
+    printf("+--------------------------------------------------------------+\n");
     printf("Tipo de Corte: ");
     scanf("%s", input);
-    printf(
-        "+--------------------------------------------------------------+\n");
+    printf("+--------------------------------------------------------------+\n");
 
     if (!apenasNumeros(input)) {
       printf("Entrada inválida. Digite apenas números.\n");
-      printf(
-          "+--------------------------------------------------------------+\n");
+      printf("+--------------------------------------------------------------+\n");
       continue;
     }
     opcao = atoi(input);
@@ -133,15 +133,15 @@ int selecionarTipoCorte(char *tipo_corte) {
       strcpy(tipo_corte, "Pézinho");
       return 1;
     default:
-      printf(
-          "Tipo de Corte inválido. Por favor, selecione uma opção correta.\n");
-      printf(
-          "+--------------------------------------------------------------+\n");
+      printf("Tipo de Corte inválido. Por favor, selecione uma opção correta.\n");
+      printf("+--------------------------------------------------------------+\n");
     }
   }
 }
 
 int main() {
+  setlocale(LC_ALL, ""); // ✅ ativa acentos corretamente
+
   FilaEspera *barbearia = createFila();
   int escolha;
   char input[100];
@@ -156,26 +156,24 @@ int main() {
     printf("1. Inserir cliente na fila de espera\n");
     printf("2. Atender próximo cliente na fila de espera\n");
     printf("3. Sair\n");
-    printf(
-        "+--------------------------------------------------------------+\n");
+    printf("+--------------------------------------------------------------+\n");
     printf("Ação: ");
     scanf("%s", input);
-    printf(
-        "+--------------------------------------------------------------+\n");
+    printf("+--------------------------------------------------------------+\n");
+
     if (!apenasNumeros(input)) {
       printf("Entrada inválida. Digite apenas números.\n");
-      printf(
-          "+--------------------------------------------------------------+\n");
+      printf("+--------------------------------------------------------------+\n");
       continue;
     }
+
     escolha = atoi(input);
 
     switch (escolha) {
     case 1:
       printf("Digite o nome do cliente: ");
       scanf(" %[^\n]", nome_cliente);
-      printf(
-          "+--------------------------------------------------------------+\n");
+      printf("+--------------------------------------------------------------+\n");
 
       while (!selecionarTipoCorte(tipo_corte)) {
       }
@@ -185,13 +183,16 @@ int main() {
     case 2:
       proximoCliente(barbearia);
       break;
+
     case 3:
       freeFilaEspera(barbearia);
       printf("Programa encerrado.\n");
       return 0;
+
     default:
       printf("Opção inválida. Tente novamente.\n");
     }
   }
+
   return 0;
 }
